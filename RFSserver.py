@@ -164,11 +164,10 @@ class InitHandler(tornado.web.RequestHandler, ABC):
             logging.warning("Init auth is None")
             self.write(json.dumps(dict(status=1, message="Init auth is None")))
         logging.info("InitHandler root: {}".format(root))
-        if not root or os.path.exists(root):
-            self.write(json.dumps(dict(status=1, message='root is None or exists')))
+        if not root or not os.path.exists(root) or len(os.listdir(root)) > 0:
+            self.write(json.dumps(dict(status=1, message='root is None or not exists or root not empty')))
         else:
             try:
-                os.makedirs(root)
                 utils.creat_ignore(root)
                 creat_auth(root, auth)
             except BaseException as e:

@@ -7,7 +7,7 @@
 - RFSserver.py 是服务端，在服务器启动即可，一台机器启动一个实例就可以，保持后台运行，省力省心。
 - RFS.py 是客户端，直接运行可显示使用帮助，强烈建议把RFS.py打包成可执行文件，在环境变量中指明，使用更简单。
 - 需要保证local path 和 remote path 的所有文件多有读写权限。
-- `init`需要make dir remote path，所以之前remote path不能存在。
+- `init`需要remote path，而且 remote path必须为空文件夹。
 - 只支持单文件与单文件同步，不支持多对一，当然可以自己探索，但不推荐使用。
 - `init`会在服务端创建3个文件，客户端创建3个文件
     -`.auth`:鉴权文件，不可删除，remote path存在。
