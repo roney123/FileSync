@@ -29,7 +29,7 @@
 ### Usage
 - server: `python3 rfs_server.py port`
 - client: 
-    - `pyinstaller --onefile rfs.py` 生成的可执行程序在./dist/rfs/中
+    - `pyinstaller rfs.py` 生成的可执行程序在./dist/rfs/中
     - 把程序添加到环境变量
     - `rfs`
 ### Contact
