@@ -19,7 +19,7 @@ def simple_http_get(url):
     try:
         response = requests.get(url, timeout=6)
         if response.status_code == 200:
-            res = json.loads(response.content)
+            res = json.loads(response.text)
             if res["status"] == 0:
                 return True
             else:
@@ -39,7 +39,7 @@ def remote_tree(ip, remote_root, auth):
     try:
         response = requests.get(_url, timeout=6)
         if response.status_code == 200:
-            res = json.loads(response.content)
+            res = json.loads(response.text)
             if res["status"] == 0:
                 return res["data"]
             else:
@@ -62,17 +62,17 @@ def remote_remove(ip,remote_root,file,auth):
 def remote_upload(ip,remote_root,local_root,file,auth):
     _url = "{}/upload?root={}&file={}&auth={}".format(ip,quote(remote_root),quote(file),auth)
     try:
-        with open(os.path.join(local_root, file),'rb') as f:
+        with open(os.path.join(local_root, file), 'rb') as f:
             data = f.read()
         response = requests.post(_url, data=data)
         if response.status_code == 200:
-            res = json.loads(response.content)
+            res = json.loads(response.text)
             if res["status"] == 0:
                 return True
             else:
                 print(res["message"])
     except BaseException as e:
-        print(e)
+        print("remote_upload:{}".format(e))
     return False
 
 
@@ -117,7 +117,7 @@ def read_config():
     config_file = os.path.join(".", utils.config_name)
     with open(config_file, 'r') as f:
         ip, remote_path,auth = f.read().replace("\n","").split("\t")
-    return ip,remote_path,auth
+    return ip, remote_path, auth
 
 
 def diff():
@@ -128,8 +128,7 @@ def diff():
     }
     if not test():
         print("test is error!")
-        utils.print_dict(diff_dict)
-        return diff_dict
+        return None
     ip, remote_path, auth = read_config()
     local_path = "."
     remote_tree_dict = remote_tree(ip, remote_path,auth)
@@ -164,84 +163,103 @@ def diff():
         for k in _l:
             _now_relative_path = os.path.normpath(os.path.join(_relative_path, k))
             diff_dict[local_only][_now_relative_path] = _l[k]
+    print("Diff:")
     utils.print_dict(diff_dict)
     return diff_dict
 
 
 def push(diff_dict):
-    print("Push start")
-    ip, remote_path, auth = read_config()
-    local_path = "."
-    for d in tqdm.tqdm(diff_dict[remote_only], desc="Delete"):
-        if not remote_remove(ip, remote_path, d, auth):
-            print("{}: file remove fault".format(d))
-    for m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
-        if not remote_upload(ip, remote_path, local_path, m, auth):
-            print("{}: file modify fault".format(m))
-    for a in tqdm.tqdm(diff_dict[local_only], desc="Add"):
-        if isinstance(diff_dict[local_only][a], dict):
-            if not remote_mkdir(ip, remote_path, a, auth):
-                print("{}: dir creat fault".format(a))
-        else:
-            if not remote_upload(ip, remote_path, local_path, a, auth):
-                print("{}: file add fault".format(a))
-    print("Push end")
+    try:
+        print("Push start")
+        ip, remote_path, auth = read_config()
+        local_path = "."
+        for d in tqdm.tqdm(diff_dict[remote_only], desc="Delete"):
+            if not remote_remove(ip, remote_path, d, auth):
+                print("{}: file remove fault".format(d))
+        for m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
+            if not remote_upload(ip, remote_path, local_path, m, auth):
+                print("{}: file modify fault".format(m))
+        for a in tqdm.tqdm(diff_dict[local_only], desc="Add"):
+            if isinstance(diff_dict[local_only][a], dict):
+                if not remote_mkdir(ip, remote_path, a, auth):
+                    print("{}: dir creat fault".format(a))
+            else:
+                if not remote_upload(ip, remote_path, local_path, a, auth):
+                    print("{}: file add fault".format(a))
+        print("Push end")
+        return True
+    except BaseException as e:
+        print("error: {}".format(e))
+        return False
 
 
 def pull(diff_dict):
-    print("Pull start")
-    ip, remote_path, auth = read_config()
-    local_path = "."
+    try:
+        print("Pull start")
+        ip, remote_path, auth = read_config()
+        local_path = "."
 
-    for d in tqdm.tqdm(diff_dict[local_only], desc="Delete"):
-        if not utils.remove_file(local_path,d):
-            print("{}: file remove fault".format(d))
+        for d in tqdm.tqdm(diff_dict[local_only], desc="Delete"):
+            if not utils.remove_file(local_path,d):
+                print("{}: file remove fault".format(d))
 
-    for m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
-        if not remote_download(ip, remote_path, local_path, m, auth):
-            print("{}: file modify fault".format(m))
+        for m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
+            if not remote_download(ip, remote_path, local_path, m, auth):
+                print("{}: file modify fault".format(m))
 
-    for a in tqdm.tqdm(diff_dict[remote_only], desc="Add"):
-        if isinstance(diff_dict[remote_only][a],dict):
-            local_file = os.path.join(local_path,a)
-            if not os.path.exists(local_file):
-                os.makedirs(local_file)
+        for a in tqdm.tqdm(diff_dict[remote_only], desc="Add"):
+            if isinstance(diff_dict[remote_only][a],dict):
+                local_file = os.path.join(local_path,a)
                 if not os.path.exists(local_file):
-                    print("{}: dir creat fault".format(a))
-        else:
-            if not remote_download(ip, remote_path, local_path, a, auth):
-                print("{}: file add fault".format(a))
-
-    print("Pull end")
+                    os.makedirs(local_file)
+                    if not os.path.exists(local_file):
+                        print("{}: dir creat fault".format(a))
+            else:
+                if not remote_download(ip, remote_path, local_path, a, auth):
+                    print("{}: file add fault".format(a))
+        print("Pull end")
+        return True
+    except BaseException as e:
+        print("error: {}".format(e))
+        return False
 
 
 def test():
-    ip, remote_path, auth = read_config()
-    local_path = "."
-    b, m = utils.test_dir(local_path)
-    if not b:
-        print("local error:{}".format(m))
+    try:
+        ip, remote_path, auth = read_config()
+        local_path = "."
+        b, m = utils.test_dir(local_path)
+        if not b:
+            print("local error:{}".format(m))
+            return False
+        return remote_test(ip, remote_path, auth)
+    except BaseException as e:
+        print("error: {}".format(e))
         return False
-    return remote_test(ip, remote_path, auth)
 
 
 def init(ip,remote_path):
-    config_file = os.path.join(".", utils.config_name)
-    if os.path.exists(config_file):
-        print("{}: config exists".format(config_file))
-        return False
-    else:
-        auth = str(uuid.uuid4())
-        if not remote_init(ip,remote_path,auth):
-            print("{}: remote error".format(config_file))
+    try:
+        config_file = os.path.join(".", utils.config_name)
+        if os.path.exists(config_file):
+            print("{}: config exists".format(config_file))
             return False
-        with open(config_file, 'w') as f:
-            f.write("{}\t{}\t{}".format(ip, remote_path, auth))
-        utils.creat_ignore(".")
-    return test()
+        else:
+            auth = str(uuid.uuid4())
+            if not remote_init(ip,remote_path,auth):
+                print("{}: remote error".format(config_file))
+                return False
+            with open(config_file, 'w') as f:
+                f.write("{}\t{}\t{}".format(ip, remote_path, auth))
+            utils.creat_ignore(".")
+        return test()
+    except BaseException as e:
+        print("error: {}".format(e))
+        return False
 
 if __name__ == "__main__":
+    pass
     #init("http://127.0.0.1:8889",r"C:\Users\zhangqiSX3552\Desktop\testFS")
     # print(json.dumps(diff(), indent=4, sort_keys=True))
-    _diff_dict = diff()
-    push(_diff_dict)
+    # _diff_dict = diff()
+    # push(_diff_dict)

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+这是R File Sync的服务端
+建议后台启动，output储存好
+请注意有时候权限不足所带来的问题
+"""
 __author__ = 'Roney'
 
 from abc import ABC
@@ -75,7 +80,8 @@ class UploadHandler(AuthHandler, ABC):
                     self.write(json.dumps(dict(status=1, message="file not remove")))
                 if os.path.exists(cache_file):
                     os.remove(cache_file)
-            self.write(json.dumps(dict(status=1, message="file is none")))
+            else:
+                self.write(json.dumps(dict(status=1, message="file is none")))
 
 
 class DownloadHandler(AuthHandler, ABC):

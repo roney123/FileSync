@@ -6,7 +6,6 @@ import hashlib
 import os
 import logging
 import shutil
-import json
 
 cache_dir = "."
 ignore_name = ".FSignore"
