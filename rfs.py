@@ -13,17 +13,17 @@ def print_help():
     info = """
 ****************** R File Sync ******************
 This is a client and the work path can only be the current path!
-Usage: RFS.py Action [Arguments]
+Usage: rfs.py Action [Arguments]
 Action:
-    initialize: RFS.py init remote_server remote_path
+    initialize: rfs.py init remote_server remote_path
                 # Initialize the work path and the remote path. The remote path must not exist.
-    test:       RFS.py test
+    test:       rfs.py test
                 # Test the read and write permissions of both files.
-    different:  RFS.py diff
+    different:  rfs.py diff
                 # Compare the differences between the both files.
-    push:       RFS.py push [y]
+    push:       rfs.py push [y]
                 # Synchronize local files to the server.
-    pull:       RFS.py pull [y]
+    pull:       rfs.py pull [y]
                 # Synchronize server files to the local.
 Explain:
     [y] stands for optional, so I recommend not using it.

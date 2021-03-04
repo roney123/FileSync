@@ -6,6 +6,7 @@ import hashlib
 import os
 import logging
 import shutil
+import json
 
 cache_dir = "."
 ignore_name = ".FSignore"
@@ -141,7 +142,6 @@ def print_dict(d):
     print(json.dumps(d, indent=4, sort_keys=True))
 
 if __name__ == "__main__":
-    import json
     print(remove_file(".", "backup/1"))
     # print(json.dumps(get_dir_tree("./"), indent=4, sort_keys=True))
     # # print(os.access(r"C:\Users\zhangqiSX3552\Desktop\1", os.R_OK))
