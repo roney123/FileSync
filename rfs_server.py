@@ -69,8 +69,7 @@ class UploadHandler(AuthHandler, ABC):
                     await f.write(self.request.body)
                 logging.info("download file end:{}".format(abs_file))
                 if utils.remove_file(root, relative_file):
-                    os.rename(cache_file, abs_file)
-                    if os.path.exists(abs_file):
+                    if utils.move_file(cache_file, abs_file):
                         self.write(json.dumps(dict(status=0)))
                     else:
                         logging.warning("move file error {} -> {}".format(cache_file,abs_file))

@@ -37,7 +37,7 @@ def remote_test(ip, remote_root, auth):
 def remote_tree(ip, remote_root, auth):
     _url = "{}/get?root={}&auth={}".format(ip, quote(remote_root), auth)
     try:
-        response = requests.get(_url, timeout=6)
+        response = requests.get(_url, timeout=30)
         if response.status_code == 200:
             res = json.loads(response.text)
             if res["status"] == 0:
@@ -86,18 +86,17 @@ def remote_download(ip,remote_root,local_root,file,auth):
     cache_file = os.path.join(utils.cache_dir, os.path.basename(file) + "_" + str(uuid.uuid4()))
     cache_file = os.path.join(local_root, cache_file)
     try:
-        response = requests.get(_url, timeout=6)
+        response = requests.get(_url, timeout=30)
         if response.status_code == 200:
             if response.content != "ERROR":
                 with open(cache_file, "wb") as f:
                     f.write(response.content)
-                utils.remove_file(local_root, file)
-                abs_file = os.path.join(local_root,file)
-                if os.path.exists(abs_file):
+                abs_file = os.path.join(local_root, file)
+                if not utils.remove_file(local_root, file):
                     print("download remove local error:{}".format(abs_file))
                 else:
-                    os.rename(cache_file,abs_file)
-                    if os.path.exists(abs_file):
+
+                    if utils.move_file(cache_file, abs_file):
                         return True
                     else:
                         print("download file cache -> local error:{}".format(cache_file))
@@ -107,6 +106,8 @@ def remote_download(ip,remote_root,local_root,file,auth):
         else:
             print("response.status_code: {}".format(response.status_code))
     except BaseException as e:
+        import traceback
+        traceback.print_exc()
         print(e)
     if os.path.exists(cache_file):
         os.remove(cache_file)
@@ -133,11 +134,13 @@ def diff():
         local_only: dict(),
     }
     if not test():
-        print("test is error!")
+        print("Error: test is error!")
         return None
     ip, remote_path, auth = read_config()
     local_path = "."
-    remote_tree_dict = remote_tree(ip, remote_path,auth)
+    remote_tree_dict = remote_tree(ip, remote_path, auth)
+    if remote_tree_dict is None:
+        print("Error: server maybe timeout.")
     local_tree_dict = utils.get_dir_tree(local_path)
     relative_path = "."
     _d = [(relative_path, list(remote_tree_dict.values())[0], list(local_tree_dict.values())[0])]
@@ -194,56 +197,63 @@ def get_tree_leaf(tree_dict):
 
 
 def push(diff_dict):
+    re_bool = True
     try:
         print("Push start")
         ip, remote_path, auth = read_config()
         local_path = "."
-        for _, d in tqdm.tqdm(diff_dict[remote_only], desc="Delete"):
+        for _, d in tqdm.tqdm(diff_dict[remote_only], desc="Delete", ncols=10):
             if not remote_remove(ip, remote_path, d, auth):
                 print("{}: file remove fault".format(d))
-        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
+                re_bool = False
+        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify", ncols=10):
             if not remote_upload(ip, remote_path, local_path, m, auth):
                 print("{}: file modify fault".format(m))
-        for is_dir, a in tqdm.tqdm(diff_dict[local_only], desc="Add"):
+                re_bool = False
+        for is_dir, a in tqdm.tqdm(diff_dict[local_only], desc="Add", ncols=10):
             if is_dir:
                 if not remote_mkdir(ip, remote_path, a, auth):
                     print("{}: dir creat fault".format(a))
+                    re_bool = False
             else:
                 if not remote_upload(ip, remote_path, local_path, a, auth):
                     print("{}: file add fault".format(a))
+                    re_bool = False
         print("Push end")
-        return True
+        return re_bool
     except BaseException as e:
         print("error: {}".format(e))
         return False
 
 
 def pull(diff_dict):
+    re_bool = True
     try:
         print("Pull start")
         ip, remote_path, auth = read_config()
         local_path = "."
-
-        for _, d in tqdm.tqdm(diff_dict[local_only], desc="Delete"):
+        for _, d in tqdm.tqdm(diff_dict[local_only], desc="Delete", ncols=10):
             if not utils.remove_file(local_path,d):
                 print("{}: file remove fault".format(d))
-
-        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
+                re_bool = False
+        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify", ncols=10):
             if not remote_download(ip, remote_path, local_path, m, auth):
                 print("{}: file modify fault".format(m))
-
-        for is_dir, a in tqdm.tqdm(diff_dict[remote_only], desc="Add"):
+                re_bool = False
+        for is_dir, a in tqdm.tqdm(diff_dict[remote_only], desc="Add", ncols=10):
             if is_dir:
                 local_file = os.path.join(local_path,a)
                 if not os.path.exists(local_file):
                     os.makedirs(local_file)
                     if not os.path.exists(local_file):
                         print("{}: dir creat fault".format(a))
+                        re_bool = False
             else:
                 if not remote_download(ip, remote_path, local_path, a, auth):
                     print("{}: file add fault".format(a))
+                    re_bool = False
         print("Pull end")
-        return True
+        return re_bool
     except BaseException as e:
         print("error: {}".format(e))
         return False

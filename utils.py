@@ -8,12 +8,13 @@ import logging
 import shutil
 import json
 
-cache_dir = "."
+cache_dir = ""
 ignore_name = ".FSignore"
 backup_dir = ".backup"
 config_name = ".FSconfig"
 auth_name = ".auth"
 default_ignore = [".FSconfig", ".backup", ".FSignore", ".auth", ".git", ".idea"]
+
 
 def is_match(s, p):
     scur, pcur, sstar, pstar = 0, 0, None, None
@@ -88,6 +89,15 @@ def get_dir_tree(path):
     return dir_dict
 
 
+def move_file(old_file,new_file):
+    if os.path.exists(old_file) and not os.path.exists(new_file):
+        new_path = os.path.dirname(new_file)
+        if not os.path.exists(new_path):
+            os.makedirs(new_path)
+        os.rename(old_file, new_file)
+    return os.path.exists(new_file) and not os.path.exists(old_file)
+
+
 def remove_file(root_path, relative_file):
     abs_file = os.path.join(root_path, relative_file)
     try:
@@ -97,12 +107,9 @@ def remove_file(root_path, relative_file):
             else:
                 if backup_dir:
                     backup_file = os.path.join(root_path, os.path.join(backup_dir, relative_file))
-                    backup_file_dir = os.path.dirname(backup_file)
                     if os.path.exists(backup_file):
                         os.remove(backup_file)
-                    if not os.path.exists(backup_file_dir):
-                        os.makedirs(backup_file_dir)
-                    os.rename(abs_file, backup_file)
+                    move_file(abs_file, backup_file)
                 else:
                     os.remove(abs_file)
     except BaseException as e:
