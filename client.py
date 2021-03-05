@@ -120,6 +120,12 @@ def read_config():
     return ip, remote_path, auth
 
 
+def tree_join_path(root, file):
+    if not root or root == ".":
+        return file
+    return "{}/{}".format(root, file)
+
+
 def diff():
     diff_dict = {
         remote_only: dict(),
@@ -136,9 +142,9 @@ def diff():
     relative_path = "."
     _d = [(relative_path, list(remote_tree_dict.values())[0], list(local_tree_dict.values())[0])]
     while len(_d) > 0:
-        _relative_path, _r, _l = _d.pop()
+        _relative_path, _r, _l = _d.pop(0)
         for k in _r:
-            _now_relative_path = os.path.normpath(os.path.join(_relative_path, k))
+            _now_relative_path = tree_join_path(_relative_path, k)
             if k in _l:
                 if isinstance(_r[k], dict):
                     if isinstance(_l[k], dict):
@@ -161,9 +167,9 @@ def diff():
             else:
                 diff_dict[remote_only][_now_relative_path] = _r[k]
         for k in _l:
-            _now_relative_path = os.path.normpath(os.path.join(_relative_path, k))
+            _now_relative_path = tree_join_path(_relative_path, k)
             diff_dict[local_only][_now_relative_path] = _l[k]
-    print("Diff:")
+    print("Diff:\nRemote root: '{}'".format(remote_path))
     utils.print_dict(diff_dict)
     return get_tree_leaf(diff_dict)
 
@@ -180,7 +186,7 @@ def get_tree_leaf(tree_dict):
                     if len(_d) == 0:
                         new_tree[k].append((True, now_path))
                     for next_name, next_dict in _d.items():
-                        next_path = os.path.join(now_path, next_name)
+                        next_path = tree_join_path(now_path, next_name)
                         dir_list.append((next_path, next_dict))
                 else:
                     new_tree[k].append((False, now_path))
