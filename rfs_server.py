@@ -172,10 +172,10 @@ class InitHandler(tornado.web.RequestHandler, ABC):
                 creat_auth(root, auth)
             except BaseException as e:
                 logging.warning(e)
-            if os.path.exists(root):
+            if os.path.exists(root) and is_auth(root, auth):
                 self.write(json.dumps(dict(status=0)))
             else:
-                self.write(json.dumps(dict(status=1, message='path not create')))
+                self.write(json.dumps(dict(status=1, message='path not create or no permission')))
 
 
 class MkDirHandler(AuthHandler, ABC):
