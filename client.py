@@ -202,15 +202,15 @@ def push(diff_dict):
         print("Push start")
         ip, remote_path, auth = read_config()
         local_path = "."
-        for _, d in tqdm.tqdm(diff_dict[remote_only], desc="Delete", ncols=10):
+        for _, d in tqdm.tqdm(diff_dict[remote_only], desc="Delete", ncols=0):
             if not remote_remove(ip, remote_path, d, auth):
                 print("{}: file remove fault".format(d))
                 re_bool = False
-        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify", ncols=10):
+        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify", ncols=0):
             if not remote_upload(ip, remote_path, local_path, m, auth):
                 print("{}: file modify fault".format(m))
                 re_bool = False
-        for is_dir, a in tqdm.tqdm(diff_dict[local_only], desc="Add", ncols=10):
+        for is_dir, a in tqdm.tqdm(diff_dict[local_only], desc="Add", ncols=0):
             if is_dir:
                 if not remote_mkdir(ip, remote_path, a, auth):
                     print("{}: dir creat fault".format(a))
@@ -232,15 +232,15 @@ def pull(diff_dict):
         print("Pull start")
         ip, remote_path, auth = read_config()
         local_path = "."
-        for _, d in tqdm.tqdm(diff_dict[local_only], desc="Delete", ncols=10):
+        for _, d in tqdm.tqdm(diff_dict[local_only], desc="Delete", ncols=0):
             if not utils.remove_file(local_path,d):
                 print("{}: file remove fault".format(d))
                 re_bool = False
-        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify", ncols=10):
+        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify", ncols=0):
             if not remote_download(ip, remote_path, local_path, m, auth):
                 print("{}: file modify fault".format(m))
                 re_bool = False
-        for is_dir, a in tqdm.tqdm(diff_dict[remote_only], desc="Add", ncols=10):
+        for is_dir, a in tqdm.tqdm(diff_dict[remote_only], desc="Add", ncols=0):
             if is_dir:
                 local_file = os.path.join(local_path,a)
                 if not os.path.exists(local_file):
