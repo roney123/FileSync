@@ -39,7 +39,7 @@ def print_error(info,b_help=False):
 
 
 def print_success():
-    print("\n******************\nRun success!!!\n******************\n")
+    print("\n******************\nRun success!!!\n******************")
 
 
 if __name__ == "__main__":
