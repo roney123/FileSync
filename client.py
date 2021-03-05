@@ -165,7 +165,26 @@ def diff():
             diff_dict[local_only][_now_relative_path] = _l[k]
     print("Diff:")
     utils.print_dict(diff_dict)
-    return diff_dict
+    return get_tree_leaf(diff_dict)
+
+
+def get_tree_leaf(tree_dict):
+    new_tree = dict()
+    for k, v in tree_dict.items():
+        new_tree[k] = []  # (bool,file) : True is dir, False is file
+        for name, _d in v.items():
+            dir_list = [(name, _d)]
+            while len(dir_list) > 0:
+                now_path, _d = dir_list.pop()
+                if isinstance(_d, dict):
+                    if len(_d) == 0:
+                        new_tree[k].append((True, now_path))
+                    for next_name, next_dict in _d.items():
+                        next_path = os.path.join(now_path, next_name)
+                        dir_list.append((next_path, next_dict))
+                else:
+                    new_tree[k].append((False, now_path))
+    return new_tree
 
 
 def push(diff_dict):
@@ -173,14 +192,14 @@ def push(diff_dict):
         print("Push start")
         ip, remote_path, auth = read_config()
         local_path = "."
-        for d in tqdm.tqdm(diff_dict[remote_only], desc="Delete"):
+        for _, d in tqdm.tqdm(diff_dict[remote_only], desc="Delete"):
             if not remote_remove(ip, remote_path, d, auth):
                 print("{}: file remove fault".format(d))
-        for m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
+        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
             if not remote_upload(ip, remote_path, local_path, m, auth):
                 print("{}: file modify fault".format(m))
-        for a in tqdm.tqdm(diff_dict[local_only], desc="Add"):
-            if isinstance(diff_dict[local_only][a], dict):
+        for is_dir, a in tqdm.tqdm(diff_dict[local_only], desc="Add"):
+            if is_dir:
                 if not remote_mkdir(ip, remote_path, a, auth):
                     print("{}: dir creat fault".format(a))
             else:
@@ -199,16 +218,16 @@ def pull(diff_dict):
         ip, remote_path, auth = read_config()
         local_path = "."
 
-        for d in tqdm.tqdm(diff_dict[local_only], desc="Delete"):
+        for _, d in tqdm.tqdm(diff_dict[local_only], desc="Delete"):
             if not utils.remove_file(local_path,d):
                 print("{}: file remove fault".format(d))
 
-        for m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
+        for _, m in tqdm.tqdm(diff_dict[modify], desc="Modify"):
             if not remote_download(ip, remote_path, local_path, m, auth):
                 print("{}: file modify fault".format(m))
 
-        for a in tqdm.tqdm(diff_dict[remote_only], desc="Add"):
-            if isinstance(diff_dict[remote_only][a],dict):
+        for is_dir, a in tqdm.tqdm(diff_dict[remote_only], desc="Add"):
+            if is_dir:
                 local_file = os.path.join(local_path,a)
                 if not os.path.exists(local_file):
                     os.makedirs(local_file)
