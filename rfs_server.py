@@ -199,6 +199,11 @@ class MkDirHandler(AuthHandler, ABC):
                 self.write(json.dumps(dict(status=1, message='path not create')))
 
 
+class MainHandler(tornado.web.RequestHandler, ABC):
+    def get(self):
+        self.write("It's \"R File Sync\".\nIt's not a joke...")
+
+
 application = tornado.web.Application([
     (r"/upload", UploadHandler),
     (r"/mkdir", MkDirHandler),
@@ -206,7 +211,8 @@ application = tornado.web.Application([
     (r"/remove",  RemoveHandler),
     (r"/get", GetHandler),
     (r"/test", TestHandler),
-    (r"/init", InitHandler)
+    (r"/init", InitHandler),
+    (r"/init", MainHandler)
 ])
 
 
