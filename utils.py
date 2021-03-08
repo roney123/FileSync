@@ -13,7 +13,7 @@ ignore_name = ".FSignore"
 backup_dir = ".backup"
 config_name = ".FSconfig"
 auth_name = ".auth"
-default_ignore = [".FSconfig", ".backup", ".FSignore", ".auth", ".git", ".idea"]
+default_ignore = [".FSconfig", ".backup", ".FSignore", ".auth", "*.git", "*.idea", "*__pycache__"]
 
 
 def is_match(s, p):
