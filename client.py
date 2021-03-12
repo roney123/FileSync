@@ -83,8 +83,8 @@ def remote_init(ip, remote_root,auth):
 
 def remote_download(ip,remote_root,local_root,file,auth):
     _url = "{}/download?root={}&file={}&auth={}".format(ip,quote(remote_root),quote(file),auth)
-    cache_file = os.path.join(utils.cache_dir, os.path.basename(file) + "_" + str(uuid.uuid4()))
-    cache_file = os.path.join(local_root, cache_file)
+    cache_file = os.path.join(local_root, utils.cache_dir, os.path.basename(file) + "_" + str(uuid.uuid4()))
+
     try:
         response = requests.get(_url, timeout=30)
         if response.status_code == 200:

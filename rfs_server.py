@@ -63,8 +63,7 @@ class UploadHandler(AuthHandler, ABC):
         else:
             if abs_file:
                 logging.info("download file start:{}".format(abs_file))
-                cache_file = os.path.join(utils.cache_dir,os.path.basename(relative_file)+"_"+str(uuid.uuid4()))
-                cache_file = os.path.join(root, cache_file)
+                cache_file = os.path.join(root, utils.cache_dir, os.path.basename(relative_file)+"_"+str(uuid.uuid4()))
                 async with aiofiles.open(cache_file, 'wb') as f:
                     await f.write(self.request.body)
                 logging.info("download file end:{}".format(abs_file))
