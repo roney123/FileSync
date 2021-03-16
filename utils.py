@@ -98,6 +98,14 @@ def move_file(old_file,new_file):
     return os.path.exists(new_file) and not os.path.exists(old_file)
 
 
+def delete_file(file_or_dir):
+    if os.path.exists(file_or_dir):
+        if os.path.isdir(file_or_dir):
+            shutil.rmtree(file_or_dir)
+        else:
+            os.remove(file_or_dir)
+
+
 def remove_file(root_path, relative_file):
     abs_file = os.path.join(root_path, relative_file)
     try:
@@ -107,11 +115,11 @@ def remove_file(root_path, relative_file):
             else:
                 if backup_dir:
                     backup_file = os.path.join(root_path, os.path.join(backup_dir, relative_file))
-                    if os.path.exists(backup_file):
-                        os.remove(backup_file)
+                    delete_file(backup_file)
                     move_file(abs_file, backup_file)
                 else:
-                    os.remove(abs_file)
+                    delete_file(abs_file)
+
     except BaseException as e:
         logging.warning("remove file/dir error: {}".format(e))
     return not os.path.exists(abs_file)

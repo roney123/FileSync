@@ -186,13 +186,13 @@ def get_tree_leaf(tree_dict):
             while len(dir_list) > 0:
                 now_path, _d = dir_list.pop()
                 if isinstance(_d, dict):
-                    if len(_d) == 0:
-                        new_tree[k].append((True, now_path))
+                    new_tree[k].append((True, now_path))
                     for next_name, next_dict in _d.items():
                         next_path = tree_join_path(now_path, next_name)
                         dir_list.append((next_path, next_dict))
                 else:
                     new_tree[k].append((False, now_path))
+    utils.print_dict(new_tree)
     return new_tree
 
 

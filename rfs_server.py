@@ -111,14 +111,10 @@ class RemoveHandler(AuthHandler, ABC):
             return
         logging.info("RemoveHandler root:{} file: {} ".format(root, relative_file))
         if root and relative_file:
-            if os.path.exists(os.path.join(root, relative_file)):
-                if utils.remove_file(root, relative_file):
-                    self.write(json.dumps(dict(status=0)))
-                else:
-                    self.write(json.dumps(dict(status=1, message="file not remove")))
+            if utils.remove_file(root, relative_file):
+                self.write(json.dumps(dict(status=0)))
             else:
-
-                self.write(json.dumps(dict(status=1, message="file not exists")))
+                self.write(json.dumps(dict(status=1, message="file not remove")))
         else:
             self.write(json.dumps(dict(status=1, message="param is none")))
 
