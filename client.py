@@ -192,7 +192,7 @@ def get_tree_leaf(tree_dict):
                         dir_list.append((next_path, next_dict))
                 else:
                     new_tree[k].append((False, now_path))
-    utils.print_dict(new_tree)
+    # utils.print_dict(new_tree)
     return new_tree
 
 
