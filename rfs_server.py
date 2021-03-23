@@ -220,5 +220,5 @@ if __name__ == "__main__":
     logging.info("server port: {},backup_dir: {}".format(args.port, args.use_backup))
     if not args.use_backup:
         utils.backup_dir = None
-    application.listen(args.port)
+    application.listen(args.port, max_buffer_size=10485760000) # 10G
     tornado.ioloop.IOLoop.instance().start()
