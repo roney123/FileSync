@@ -110,15 +110,15 @@ def remove_file(root_path, relative_file):
     abs_file = os.path.join(root_path, relative_file)
     try:
         if os.path.exists(abs_file):
-            if os.path.isdir(abs_file):
-                shutil.rmtree(abs_file)
-            else:
-                if backup_dir:
-                    backup_file = os.path.join(root_path, os.path.join(backup_dir, relative_file))
-                    delete_file(backup_file)
-                    move_file(abs_file, backup_file)
+            if backup_dir:
+                backup_file = os.path.join(root_path, os.path.join(backup_dir, relative_file))
+                delete_file(backup_file)
+                if os.path.isdir(abs_file):
+                    shutil.move(abs_file, backup_file)
                 else:
-                    delete_file(abs_file)
+                    move_file(abs_file, backup_file)
+            else:
+                delete_file(abs_file)
 
     except BaseException as e:
         logging.warning("remove file/dir error: {}".format(e))
@@ -155,6 +155,7 @@ def creat_ignore(path):
 
 def print_dict(d):
     print(json.dumps(d, indent=4, sort_keys=True))
+
 
 if __name__ == "__main__":
     print(remove_file(".", "backup/1"))

@@ -127,21 +127,23 @@ def tree_join_path(root, file):
     return "{}/{}".format(root, file)
 
 
-def diff():
+def diff(local_tree_dict=None, remote_tree_dict=None):
     diff_dict = {
         remote_only: dict(),
         modify: dict(),
         local_only: dict(),
     }
-    if not test():
-        print("Error: test is error!")
-        return None
-    ip, remote_path, auth = read_config()
-    local_path = "."
-    remote_tree_dict = remote_tree(ip, remote_path, auth)
-    if remote_tree_dict is None:
-        print("Error: server maybe timeout.")
-    local_tree_dict = utils.get_dir_tree(local_path)
+    remote_path = None
+    if not remote_tree_dict or not local_tree_dict:
+        if not test():
+            print("Error: test is error!")
+            return None
+        ip, remote_path, auth = read_config()
+        local_path = "."
+        remote_tree_dict = remote_tree(ip, remote_path, auth)
+        if remote_tree_dict is None:
+            print("Error: server maybe timeout.")
+        local_tree_dict = utils.get_dir_tree(local_path)
     relative_path = "."
     _d = [(relative_path, list(remote_tree_dict.values())[0], list(local_tree_dict.values())[0])]
     while len(_d) > 0:
@@ -174,24 +176,31 @@ def diff():
             diff_dict[local_only][_now_relative_path] = _l[k]
     print("Diff:\nRemote root: '{}'".format(remote_path))
     utils.print_dict(diff_dict)
-    return get_tree_leaf(diff_dict)
+    return diff_dict
 
 
-def get_tree_leaf(tree_dict):
+def get_tree_leaf(tree_dict, not_use=None):
     new_tree = dict()
     for k, v in tree_dict.items():
         new_tree[k] = []  # (bool,file) : True is dir, False is file
-        for name, _d in v.items():
-            dir_list = [(name, _d)]
-            while len(dir_list) > 0:
-                now_path, _d = dir_list.pop()
+        if not_use == k:
+            for name, _d in v.items():
                 if isinstance(_d, dict):
-                    new_tree[k].append((True, now_path))
-                    for next_name, next_dict in _d.items():
-                        next_path = tree_join_path(now_path, next_name)
-                        dir_list.append((next_path, next_dict))
+                    new_tree[k].append((True, name))
                 else:
-                    new_tree[k].append((False, now_path))
+                    new_tree[k].append((False, name))
+        else:
+            for name, _d in v.items():
+                dir_list = [(name, _d)]
+                while len(dir_list) > 0:
+                    now_path, _d = dir_list.pop()
+                    if isinstance(_d, dict):
+                        new_tree[k].append((True, now_path))
+                        for next_name, next_dict in _d.items():
+                            next_path = tree_join_path(now_path, next_name)
+                            dir_list.append((next_path, next_dict))
+                    else:
+                        new_tree[k].append((False, now_path))
     # utils.print_dict(new_tree)
     return new_tree
 
@@ -200,6 +209,7 @@ def push(diff_dict):
     re_bool = True
     try:
         print("Push start")
+        diff_dict = get_tree_leaf(diff_dict, remote_only)
         ip, remote_path, auth = read_config()
         local_path = "."
         for _, d in tqdm.tqdm(diff_dict[remote_only], desc="Delete", ncols=0):
@@ -230,6 +240,7 @@ def pull(diff_dict):
     re_bool = True
     try:
         print("Pull start")
+        diff_dict = get_tree_leaf(diff_dict,local_only)
         ip, remote_path, auth = read_config()
         local_path = "."
         for _, d in tqdm.tqdm(diff_dict[local_only], desc="Delete", ncols=0):
@@ -296,5 +307,8 @@ if __name__ == "__main__":
     pass
     #init("http://127.0.0.1:8889",r"C:\Users\zhangqiSX3552\Desktop\testFS")
     # print(json.dumps(diff(), indent=4, sort_keys=True))
-    # _diff_dict = diff()
-    # push(_diff_dict)
+    _local_tree = utils.get_dir_tree(r"C:\Users\zhangqiSX3552\Desktop\标注和测试")
+    _remote_tree = utils.get_dir_tree(r"C:\Users\zhangqiSX3552\Desktop\标注和测试_test")
+    _diff_dict = diff(_local_tree, _remote_tree)
+    _diff_dict = get_tree_leaf(_diff_dict, local_only)
+    utils.print_dict(_diff_dict)
