@@ -81,7 +81,10 @@ def get_dir_tree(path):
         for file in os.listdir(_p):
             now_path = os.path.join(_p, file)
             if not _re.filter(now_path):
-                if os.path.isdir(now_path):
+                if os.path.islink(now_path):
+                    # _d[file] = "link:"+os.readlink(now_path)
+                    pass
+                elif os.path.isdir(now_path):
                     _d[file] = dict()
                     dir_list.append((now_path, _d[file]))
                 else:
